@@ -29,7 +29,7 @@ go get github.com/yaitoo/async@latest
 ```
 
 ### Wait 
-wait all tasks to completed
+wait all tasks to completed. [playground](https://go.dev/play/p/po8vX5ulSUi)
 
 ```
 t := async.New[int](func(ctx context.Context) (int, error) {
@@ -50,7 +50,7 @@ if err == nil {
 
 
 ### WaitAny
-wait any task to completed
+wait any task to completed. [playground](https://go.dev/play/p/wfLtb2KDSsG)
 
 ```
 t := async.New[int](func(ctx context.Context) (int, error) {
@@ -71,28 +71,31 @@ if err == nil {
 ```
 
 ### Timeout
-cancel all tasks if it is timeout
+cancel all tasks if it is timeout. [playground](https://go.dev/play/p/AY42qZQPQAI)
 ```
-t := async.New[int](func(ctx context.Context) (int, error) {
-    time.Sleep(2 * time.Second)
+ t := async.New[int](func(ctx context.Context) (int, error) {
+		time.Sleep(2 * time.Second)
 		return 1, nil
 	}, func(ctx context.Context) (int, error) {
-     time.Sleep(2 * time.Second)
+		time.Sleep(2 * time.Second)
 		return 2, nil
 	})
 
-result, err := t.WaitAny(context.Timeout(context.Background(), 1 * time.Second))
-//result, err := t.Wait(context.Timeout(context.Background(), 1 * time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 
-if err == nil {
-  fmt.Println(result)  
-}else{
-  fmt.Println(err) // context.DeadlineExceeded
-}
+	result, err := t.WaitAny(ctx)
+	//result, err := t.Wait(ctx)
+
+	if err == nil {
+		fmt.Println(result)
+	} else {
+		fmt.Println(err) // context.DeadlineExceeded
+	}
 ```
 
 ### Cancel
-manually cancel all tasks
+manually cancel all tasks.[playground](https://go.dev/play/p/MxjTAZJKk16)
 
 ```
 t := async.New[int](func(ctx context.Context) (int, error) {
