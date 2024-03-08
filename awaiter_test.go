@@ -129,7 +129,6 @@ func TestWait(t *testing.T) {
 func TestWaitAny(t *testing.T) {
 
 	wantedErr := errors.New("wanted")
-	//var wantedErrs error = Errors([]error{wantedErr, wantedErr})
 
 	tests := []struct {
 		name         string
@@ -228,6 +227,30 @@ func TestWaitAny(t *testing.T) {
 				})
 			},
 			wantedResult: 1,
+		},
+		{
+			name: "errors_should_work",
+			ctx:  func() context.Context { return context.Background() },
+			setup: func() Awaiter[int] {
+				return New[int](func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				}, func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				}, func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				})
+			},
+			wantedError: Errors([]error{wantedErr, wantedErr, wantedErr}),
+		},
+		{
+			name: "error_should_work",
+			ctx:  func() context.Context { return context.Background() },
+			setup: func() Awaiter[int] {
+				return New[int](func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				})
+			},
+			wantedError: Errors([]error{wantedErr}),
 		},
 		{
 			name: "context_should_work",
