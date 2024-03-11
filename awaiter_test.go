@@ -56,7 +56,23 @@ func TestWait(t *testing.T) {
 				})
 			},
 			wantedResult: []int{1, 2},
+			wantedErr:    ErrTooLessDone,
 			wantedErrs:   wantedErrs,
+		},
+		{
+			name: "errors_should_work",
+			ctx:  func() context.Context { return context.Background() },
+			setup: func() Awaiter[int] {
+				return New[int](func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				}, func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				}, func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				})
+			},
+			wantedErr:  ErrTooLessDone,
+			wantedErrs: []error{wantedErr, wantedErr, wantedErr},
 		},
 		{
 			name: "context_should_work",

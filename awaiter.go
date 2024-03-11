@@ -54,7 +54,11 @@ func (a *awaiter[T]) Wait(ctx context.Context) ([]T, error, []error) {
 		}
 	}
 
-	return items, nil, taskErrs
+	if len(items) == tt {
+		return items, nil, taskErrs
+	}
+
+	return items, ErrTooLessDone, taskErrs
 }
 
 func (a *awaiter[T]) WaitN(ctx context.Context, n int) ([]T, error, []error) {
