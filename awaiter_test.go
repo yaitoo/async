@@ -13,7 +13,7 @@ import (
 func TestWait(t *testing.T) {
 
 	wantedErr := errors.New("wanted")
-	var wantedErrs error = Errors([]error{wantedErr})
+	wantedErrs := []error{wantedErr}
 
 	tests := []struct {
 		name         string
@@ -21,7 +21,8 @@ func TestWait(t *testing.T) {
 		withCancel   bool
 		setup        func() Awaiter[int]
 		wantedResult []int
-		wantedError  error
+		wantedErr    error
+		wantedErrs   []error
 	}{
 		{
 			name: "wait_should_work",
@@ -40,7 +41,7 @@ func TestWait(t *testing.T) {
 				return a
 			},
 			wantedResult: []int{1, 2, 3},
-			wantedError:  nil,
+			wantedErr:    nil,
 		},
 		{
 			name: "error_should_work",
@@ -55,7 +56,7 @@ func TestWait(t *testing.T) {
 				})
 			},
 			wantedResult: []int{1, 2},
-			wantedError:  wantedErrs,
+			wantedErrs:   wantedErrs,
 		},
 		{
 			name: "context_should_work",
@@ -75,7 +76,7 @@ func TestWait(t *testing.T) {
 				})
 			},
 			wantedResult: []int{3},
-			wantedError:  context.DeadlineExceeded,
+			wantedErr:    context.DeadlineExceeded,
 		},
 		{
 			name: "cancel_should_work",
@@ -95,7 +96,7 @@ func TestWait(t *testing.T) {
 			},
 			withCancel:   true,
 			wantedResult: []int{3},
-			wantedError:  context.Canceled,
+			wantedErr:    context.Canceled,
 		},
 	}
 
@@ -104,6 +105,7 @@ func TestWait(t *testing.T) {
 			a := test.setup()
 			var result []int
 			var err error
+			var taskErrs []error
 
 			if test.withCancel {
 				ctx, cancel := context.WithCancel(context.Background())
@@ -111,15 +113,16 @@ func TestWait(t *testing.T) {
 					time.Sleep(1 * time.Second)
 					cancel()
 				}()
-				result, err = a.Wait(ctx)
+				result, err, taskErrs = a.Wait(ctx)
 			} else {
-				result, err = a.Wait(test.ctx())
+				result, err, taskErrs = a.Wait(test.ctx())
 			}
 
 			slices.Sort(result)
 
 			require.Equal(t, test.wantedResult, result)
-			require.Equal(t, test.wantedError, err)
+			require.Equal(t, test.wantedErr, err)
+			require.Equal(t, test.wantedErrs, taskErrs)
 
 		})
 
@@ -136,7 +139,8 @@ func TestWaitAny(t *testing.T) {
 		withCancel   bool
 		setup        func() Awaiter[int]
 		wantedResult int
-		wantedError  error
+		wantedErr    error
+		wantedErrs   []error
 	}{
 		{
 			name: "1st_should_work",
@@ -211,6 +215,7 @@ func TestWaitAny(t *testing.T) {
 				})
 			},
 			wantedResult: 1,
+			wantedErrs:   []error{wantedErr, wantedErr},
 		},
 		{
 			name: "fastest_should_work",
@@ -240,7 +245,8 @@ func TestWaitAny(t *testing.T) {
 					return 0, wantedErr
 				})
 			},
-			wantedError: Errors([]error{wantedErr, wantedErr, wantedErr}),
+			wantedErr:  ErrTooLessDone,
+			wantedErrs: []error{wantedErr, wantedErr, wantedErr},
 		},
 		{
 			name: "error_should_work",
@@ -250,7 +256,8 @@ func TestWaitAny(t *testing.T) {
 					return 0, wantedErr
 				})
 			},
-			wantedError: Errors([]error{wantedErr}),
+			wantedErr:  ErrTooLessDone,
+			wantedErrs: []error{wantedErr},
 		},
 		{
 			name: "context_should_work",
@@ -270,7 +277,7 @@ func TestWaitAny(t *testing.T) {
 					return 3, nil
 				})
 			},
-			wantedError: context.DeadlineExceeded,
+			wantedErr: context.DeadlineExceeded,
 		},
 		{
 			name: "cancel_should_work",
@@ -289,8 +296,8 @@ func TestWaitAny(t *testing.T) {
 					return 3, nil
 				})
 			},
-			withCancel:  true,
-			wantedError: context.Canceled,
+			withCancel: true,
+			wantedErr:  context.Canceled,
 		},
 	}
 
@@ -299,6 +306,7 @@ func TestWaitAny(t *testing.T) {
 			a := test.setup()
 			var result int
 			var err error
+			var taskErrs []error
 
 			if test.withCancel {
 				ctx, cancel := context.WithCancel(context.Background())
@@ -306,13 +314,137 @@ func TestWaitAny(t *testing.T) {
 					time.Sleep(1 * time.Second)
 					cancel()
 				}()
-				result, err = a.WaitAny(ctx)
+				result, err, taskErrs = a.WaitAny(ctx)
 			} else {
-				result, err = a.WaitAny(test.ctx())
+				result, err, taskErrs = a.WaitAny(test.ctx())
 			}
 
 			require.Equal(t, test.wantedResult, result)
-			require.Equal(t, test.wantedError, err)
+			require.Equal(t, test.wantedErr, err)
+			require.Equal(t, test.wantedErrs, taskErrs)
+		})
+
+	}
+}
+
+func TestWaitN(t *testing.T) {
+
+	wantedErr := errors.New("wanted")
+
+	tests := []struct {
+		name         string
+		ctx          func() context.Context
+		withCancel   bool
+		setup        func() Awaiter[int]
+		wantedN      int
+		wantedResult []int
+		wantedErr    error
+		wantedErrs   []error
+	}{
+		{
+			name: "wait_n_should_work",
+			ctx:  func() context.Context { return context.Background() },
+			setup: func() Awaiter[int] {
+				a := New[int](func(ctx context.Context) (int, error) {
+					return 1, nil
+				}, func(ctx context.Context) (int, error) {
+					return 2, nil
+				})
+
+				a.Add(func(ctx context.Context) (int, error) {
+					time.Sleep(1 * time.Second)
+					return 3, nil
+				})
+
+				return a
+			},
+			wantedN:      2,
+			wantedResult: []int{1, 2},
+		},
+		{
+			name: "error_n_should_work",
+			ctx:  func() context.Context { return context.Background() },
+			setup: func() Awaiter[int] {
+				return New[int](func(ctx context.Context) (int, error) {
+					time.Sleep(1 * time.Second)
+					return 1, nil
+				}, func(ctx context.Context) (int, error) {
+					time.Sleep(1 * time.Second)
+					return 2, nil
+				}, func(ctx context.Context) (int, error) {
+					return 0, wantedErr
+				})
+			},
+			wantedN:      2,
+			wantedResult: []int{1, 2},
+			wantedErrs:   []error{wantedErr},
+		},
+		{
+			name: "context_should_work",
+			ctx: func() context.Context {
+				ctx, _ := context.WithTimeout(context.Background(), 3*time.Second) //nolint
+				return ctx
+			},
+			setup: func() Awaiter[int] {
+				return New[int](func(ctx context.Context) (int, error) {
+					time.Sleep(5 * time.Second)
+					return 1, nil
+				}, func(ctx context.Context) (int, error) {
+					time.Sleep(5 * time.Second)
+					return 2, nil
+				}, func(ctx context.Context) (int, error) {
+					return 3, nil
+				})
+			},
+			wantedResult: []int{3},
+			wantedErr:    context.DeadlineExceeded,
+		},
+		{
+			name: "cancel_should_work",
+			ctx: func() context.Context {
+				return context.Background()
+			},
+			setup: func() Awaiter[int] {
+				return New[int](func(ctx context.Context) (int, error) {
+					time.Sleep(5 * time.Second)
+					return 1, nil
+				}, func(ctx context.Context) (int, error) {
+					time.Sleep(5 * time.Second)
+					return 2, nil
+				}, func(ctx context.Context) (int, error) {
+					return 3, nil
+				})
+			},
+			withCancel:   true,
+			wantedResult: []int{3},
+			wantedErr:    context.Canceled,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			a := test.setup()
+			var result []int
+			var err error
+			var taskErrs []error
+
+			if test.withCancel {
+				ctx, cancel := context.WithCancel(context.Background())
+				go func() {
+					time.Sleep(1 * time.Second)
+					cancel()
+				}()
+				result, err, taskErrs = a.WaitN(ctx, test.wantedN)
+			} else {
+				result, err, taskErrs = a.WaitN(test.ctx(), test.wantedN)
+			}
+
+			slices.Sort(result)
+
+			require.Equal(t, test.wantedResult, result)
+			require.Equal(t, test.wantedErr, err)
+			require.Equal(t, test.wantedErrs, taskErrs)
+
 		})
 
 	}
