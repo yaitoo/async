@@ -15,7 +15,7 @@ Async is an asynchronous task package for Go.
 - Works with generic instead of `interface{}`
 
 ## Tutorials
-see more examples on [tests](./awaiter_test.go) or [https://go.dev/play/p/IJ-lbIhTEQS](https://go.dev/play/p/IJ-lbIhTEQS)
+see more examples on [tests](./awaiter_test.go) or [go.dev](https://go.dev/play/p/7jgcRltbwts)
 
 ### Install async
 - install latest commit from `main` branch
@@ -60,7 +60,7 @@ t := async.New[int](func(ctx context.Context) (int, error) {
 		return 2, nil
 	})
 
-result, err, tasksErr := t.WaitAny(context.Background())
+result, err, taskErrs := t.WaitAny(context.Background())
 
 fmt.Println(result)  //2
 fmt.Println(err) //nil
@@ -81,7 +81,7 @@ t := async.New[int](func(ctx context.Context) (int, error) {
 		return 3, nil
 	})
 
-result, err,taskErrs := t.WaitN(context.Background(),2)
+result, err, taskErrs := t.WaitN(context.Background(),2)
 
 
 fmt.Println(result)  //[2,3] or [3,2]
@@ -91,7 +91,7 @@ fmt.Println(taskErrs) //nil
 ```
 
 ### Timeout
-cancel all tasks if it is timeout. [playground](https://go.dev/play/p/AY42qZQPQAI)
+cancel all tasks if it is timeout. 
 ```
  t := async.New[int](func(ctx context.Context) (int, error) {
 		time.Sleep(2 * time.Second)
