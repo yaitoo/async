@@ -10,12 +10,12 @@ Async is an asynchronous task package for Go.
 
 
 ## Features
-- Wait/WaitAny
+- Wait/WaitAny/WaitN
 - `context.Context` with `timeout`, `cancel`  support
 - Works with generic instead of `interface{}`
 
 ## Tutorials
-see more [examples](./awaiter_test.go)
+see more examples : [tests](./awaiter_test.go) or [play.go.dev](https://go.dev/play/p/IJ-lbIhTEQS)
 
 ### Install async
 - install latest commit from `main` branch
@@ -29,7 +29,7 @@ go get github.com/yaitoo/async@latest
 ```
 
 ### Wait 
-wait all tasks to completed. [playground](https://go.dev/play/p/po8vX5ulSUi)
+wait all tasks to completed.
 
 ```
 t := async.New[int](func(ctx context.Context) (int, error) {
@@ -38,19 +38,19 @@ t := async.New[int](func(ctx context.Context) (int, error) {
 		return 2, nil
 	})
 
-result, err := t.Wait(context.Background())
+result, err, taskErrs := t.Wait(context.Background())
 
-if err == nil {
-  fmt.Println(result)  //[1,2]
-}else{
-  fmt.Println(err)
-}
+
+fmt.Println(result)  //[1,2] or [2,1]
+fmt.Println(err) // nil
+fmt.Println(taskErrs) //nil
+
 
 ```
 
 
 ### WaitAny
-wait any task to completed. [playground](https://go.dev/play/p/wfLtb2KDSsG)
+wait any task to completed
 
 ```
 t := async.New[int](func(ctx context.Context) (int, error) {
@@ -60,13 +60,33 @@ t := async.New[int](func(ctx context.Context) (int, error) {
 		return 2, nil
 	})
 
-result, err := t.WaitAny(context.Background())
+result, err, tasksErr := t.WaitAny(context.Background())
 
-if err == nil {
-  fmt.Println(result)  //2
-}else{
-  fmt.Println(err)
-}
+fmt.Println(result)  //2
+fmt.Println(err) //nil
+fmt.Println(taskErrs) //nil
+
+```
+
+### WaitN
+wait N tasks to completed. 
+
+```
+t := async.New[int](func(ctx context.Context) (int, error) {
+    time.Sleep(2 * time.Second)
+		return 1, nil
+	}, func(ctx context.Context) (int, error) {
+		return 2, nil
+	}, func(ctx context.Context) (int, error) {
+		return 3, nil
+	})
+
+result, err,taskErrs := t.WaitN(context.Background(),2)
+
+
+fmt.Println(result)  //[2,3] or [3,2]
+fmt.Println(err) //nil
+fmt.Println(taskErrs) //nil
 
 ```
 
@@ -84,18 +104,17 @@ cancel all tasks if it is timeout. [playground](https://go.dev/play/p/AY42qZQPQA
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	result, err := t.WaitAny(ctx)
-	//result, err := t.Wait(ctx)
+	result, err, tasks := t.WaitAny(ctx)
+	//result, err, tasks := t.Wait(ctx)
 
-	if err == nil {
-		fmt.Println(result)
-	} else {
-		fmt.Println(err) // context.DeadlineExceeded
-	}
+	
+	fmt.Println(result) //nil
+	fmt.Println(err) // context.DeadlineExceeded
+	fmt.Println(taskErrs) //nil
 ```
 
 ### Cancel
-manually cancel all tasks.[playground](https://go.dev/play/p/MxjTAZJKk16)
+manually cancel all tasks.
 
 ```
 t := async.New[int](func(ctx context.Context) (int, error) {
@@ -112,14 +131,14 @@ go func(){
   cancel()
 }()
 
-result, err := t.WaitAny(ctx)
-// result, err := t.Wait(ctx)
+//result, err, taskErrs := t.WaitAny(ctx)
+ result, err, taskErrs := t.Wait(ctx)
 
-if err == nil {
-  fmt.Println(result)  
-}else{
-  fmt.Println(err) // context.Cancelled
-}
+
+fmt.Println(result)  //nil
+fmt.Println(err) // context.Cancelled
+fmt.Println(taskErrs) // nil
+
 
 ```
 
