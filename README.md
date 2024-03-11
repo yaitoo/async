@@ -3,7 +3,7 @@ Async is an asynchronous task package for Go.
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Tests](https://github.com/yaitoo/async/actions/workflows/tests.yml/badge.svg)](https://github.com/yaitoo/async/actions/workflows/tests.yml)
-[![GoDoc](https://godoc.org/github.com/yaitoo/async?status.png)](https://godoc.org/github.com/yaitoo/async)
+[![Go Reference](https://pkg.go.dev/badge/github.com/yaitoo/async.svg)](https://pkg.go.dev/github.com/yaitoo/async)
 [![Codecov](https://codecov.io/gh/yaitoo/async/branch/main/graph/badge.svg)](https://codecov.io/gh/yaitoo/async)
 [![GitHub Release](https://img.shields.io/github/v/release/yaitoo/async)](https://github.com/yaitoo/sqle/blob/main/CHANGELOG.md)
 [![Go Report Card](https://goreportcard.com/badge/yaitoo/async)](http://goreportcard.com/report/yaitoo/async)
