@@ -15,7 +15,7 @@ Async is an asynchronous task package for Go.
 - Works with generic instead of `interface{}`
 
 ## Tutorials
-see more examples : [tests](./awaiter_test.go) or [play.go.dev](https://go.dev/play/p/IJ-lbIhTEQS)
+see more examples on [tests](./awaiter_test.go) or [https://go.dev/play/p/IJ-lbIhTEQS](https://go.dev/play/p/IJ-lbIhTEQS)
 
 ### Install async
 - install latest commit from `main` branch
