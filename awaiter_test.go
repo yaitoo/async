@@ -26,7 +26,7 @@ func TestWait(t *testing.T) {
 	}{
 		{
 			name: "wait_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				a := New[int](func(ctx context.Context) (int, error) {
 					return 1, nil
@@ -45,7 +45,7 @@ func TestWait(t *testing.T) {
 		},
 		{
 			name: "error_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					return 1, nil
@@ -61,7 +61,7 @@ func TestWait(t *testing.T) {
 		},
 		{
 			name: "errors_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					return 0, wantedErr
@@ -96,9 +96,7 @@ func TestWait(t *testing.T) {
 		},
 		{
 			name: "cancel_should_work",
-			ctx: func() context.Context {
-				return context.Background()
-			},
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(5 * time.Second)
@@ -129,9 +127,9 @@ func TestWait(t *testing.T) {
 					time.Sleep(1 * time.Second)
 					cancel()
 				}()
-				result, err, taskErrs = a.Wait(ctx)
+				result, taskErrs, err = a.Wait(ctx)
 			} else {
-				result, err, taskErrs = a.Wait(test.ctx())
+				result, taskErrs, err = a.Wait(test.ctx())
 			}
 
 			slices.Sort(result)
@@ -160,9 +158,7 @@ func TestWaitAny(t *testing.T) {
 	}{
 		{
 			name: "1st_should_work",
-			ctx: func() context.Context {
-				return context.Background()
-			},
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				a := New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(5 * time.Second)
@@ -182,9 +178,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "2nd_should_work",
-			ctx: func() context.Context {
-				return context.Background()
-			},
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(5 * time.Second)
@@ -200,9 +194,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "3rd_should_work",
-			ctx: func() context.Context {
-				return context.Background()
-			},
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(5 * time.Second)
@@ -219,7 +211,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "slowest_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(3 * time.Second)
@@ -235,7 +227,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "fastest_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					return 1, nil
@@ -251,7 +243,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "errors_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					return 0, wantedErr
@@ -266,7 +258,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "error_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					return 0, wantedErr
@@ -297,9 +289,7 @@ func TestWaitAny(t *testing.T) {
 		},
 		{
 			name: "cancel_should_work",
-			ctx: func() context.Context {
-				return context.Background()
-			},
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(5 * time.Second)
@@ -330,9 +320,9 @@ func TestWaitAny(t *testing.T) {
 					time.Sleep(1 * time.Second)
 					cancel()
 				}()
-				result, err, taskErrs = a.WaitAny(ctx)
+				result, taskErrs, err = a.WaitAny(ctx)
 			} else {
-				result, err, taskErrs = a.WaitAny(test.ctx())
+				result, taskErrs, err = a.WaitAny(test.ctx())
 			}
 
 			require.Equal(t, test.wantedResult, result)
@@ -359,7 +349,7 @@ func TestWaitN(t *testing.T) {
 	}{
 		{
 			name: "wait_n_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				a := New[int](func(ctx context.Context) (int, error) {
 					return 1, nil
@@ -379,7 +369,7 @@ func TestWaitN(t *testing.T) {
 		},
 		{
 			name: "error_n_should_work",
-			ctx:  func() context.Context { return context.Background() },
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(1 * time.Second)
@@ -417,9 +407,7 @@ func TestWaitN(t *testing.T) {
 		},
 		{
 			name: "cancel_should_work",
-			ctx: func() context.Context {
-				return context.Background()
-			},
+			ctx:  context.Background,
 			setup: func() Awaiter[int] {
 				return New[int](func(ctx context.Context) (int, error) {
 					time.Sleep(5 * time.Second)
@@ -450,9 +438,9 @@ func TestWaitN(t *testing.T) {
 					time.Sleep(1 * time.Second)
 					cancel()
 				}()
-				result, err, taskErrs = a.WaitN(ctx, test.wantedN)
+				result, taskErrs, err = a.WaitN(ctx, test.wantedN)
 			} else {
-				result, err, taskErrs = a.WaitN(test.ctx(), test.wantedN)
+				result, taskErrs, err = a.WaitN(test.ctx(), test.wantedN)
 			}
 
 			slices.Sort(result)
