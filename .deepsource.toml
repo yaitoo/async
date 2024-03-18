@@ -1,5 +1,9 @@
 version = 1
 
+test_patterns = ["*_test.go"]
+
+exclude_patterns = ["*_test.go"]
+
 [[analyzers]]
 name = "go"
 
@@ -8,3 +12,5 @@ name = "go"
 
 [[transformers]]
 name = "gofmt"
+
+
