@@ -6,11 +6,25 @@ import (
 )
 
 var (
-	ErrTooLessDone = errors.New("async: too less tasks to completed without error")
+	ErrTooLessDone = errors.New("async: too less tasks/actions to completed without error")
 )
 
-func New[T any](tasks ...func(ctx context.Context) (T, error)) Awaiter[T] {
-	return &awaiter[T]{
+// Task a task with result T
+type Task[T any] func(ctx context.Context) (T, error)
+
+// New create a task waiter
+func New[T any](tasks ...Task[T]) Waiter[T] {
+	return &waiter[T]{
 		tasks: tasks,
+	}
+}
+
+// Action a task without result
+type Action func(ctx context.Context) error
+
+// NewA create an action awaiter
+func NewA(actions ...Action) Awaiter {
+	return &awaiter{
+		actions: actions,
 	}
 }

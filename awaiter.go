@@ -4,112 +4,94 @@ import (
 	"context"
 )
 
-type Awaiter[T any] interface {
-	// Add add a task
-	Add(task func(context.Context) (T, error))
-	// Wait wail for all tasks to completed
-	Wait(context.Context) ([]T, []error, error)
-	// WaitAny wait for any task to completed without error, can cancel other tasks
-	WaitAny(context.Context) (T, []error, error)
-	// WaitN wait for N tasks to completed without error
-	WaitN(context.Context, int) ([]T, []error, error)
+type Awaiter interface {
+	// Add add an action
+	Add(action Action)
+	// Wait wail for all actions to completed
+	Wait(context.Context) ([]error, error)
+	// WaitAny wait for any action to completed without error, can cancel other tasks
+	WaitAny(context.Context) ([]error, error)
+	// WaitN wait for N actions to completed without error
+	WaitN(context.Context, int) ([]error, error)
 }
 
-type awaiter[T any] struct {
-	tasks []func(context.Context) (T, error)
+type awaiter struct {
+	actions []Action
 }
 
-func (a *awaiter[T]) Add(task func(ctx context.Context) (T, error)) {
-	a.tasks = append(a.tasks, task)
+func (a *awaiter) Add(action Action) {
+	a.actions = append(a.actions, action)
 }
 
-func (a *awaiter[T]) Wait(ctx context.Context) ([]T, []error, error) {
-	wait := make(chan Result[T])
+func (a *awaiter) Wait(ctx context.Context) ([]error, error) {
+	wait := make(chan error)
 
-	for _, task := range a.tasks {
-		go func(task func(context.Context) (T, error)) {
-			r, err := task(ctx)
-			wait <- Result[T]{
-				Data:  r,
-				Error: err,
-			}
-		}(task)
+	for _, action := range a.actions {
+		go func(action Action) {
+
+			wait <- action(ctx)
+		}(action)
 	}
 
-	var r Result[T]
 	var taskErrs []error
-	var items []T
 
-	tt := len(a.tasks)
+	tt := len(a.actions)
 	for i := 0; i < tt; i++ {
 		select {
-		case r = <-wait:
-			if r.Error != nil {
-				taskErrs = append(taskErrs, r.Error)
-			} else {
-				items = append(items, r.Data)
+		case err := <-wait:
+			if err != nil {
+				taskErrs = append(taskErrs, err)
 			}
 		case <-ctx.Done():
-			return items, taskErrs, ctx.Err()
+			return taskErrs, ctx.Err()
 		}
 	}
 
-	if len(items) == tt {
-		return items, taskErrs, nil
+	if len(taskErrs) > 0 {
+		return taskErrs, ErrTooLessDone
 	}
 
-	return items, taskErrs, ErrTooLessDone
+	return taskErrs, nil
 }
 
-func (a *awaiter[T]) WaitN(ctx context.Context, n int) ([]T, []error, error) {
-	wait := make(chan Result[T])
+func (a *awaiter) WaitN(ctx context.Context, n int) ([]error, error) {
+	wait := make(chan error)
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	for _, task := range a.tasks {
-		go func(task func(context.Context) (T, error)) {
-			r, err := task(cancelCtx)
-			wait <- Result[T]{
-				Data:  r,
-				Error: err,
-			}
-		}(task)
+	for _, action := range a.actions {
+		go func(action Action) {
+			wait <- action(cancelCtx)
+
+		}(action)
 	}
 
-	var r Result[T]
 	var taskErrs []error
-	var items []T
-	tt := len(a.tasks)
+	tt := len(a.actions)
+
 	var done int
 	for i := 0; i < tt; i++ {
 		select {
-		case r = <-wait:
-			if r.Error != nil {
-				taskErrs = append(taskErrs, r.Error)
+		case err := <-wait:
+			if err != nil {
+				taskErrs = append(taskErrs, err)
 			} else {
-				items = append(items, r.Data)
+
 				done++
 				if done == n {
-					return items, taskErrs, nil
+					return taskErrs, nil
 				}
 			}
 		case <-ctx.Done():
-			return items, taskErrs, ctx.Err()
+			return taskErrs, ctx.Err()
 		}
 
 	}
 
-	return items, taskErrs, ErrTooLessDone
+	return taskErrs, ErrTooLessDone
 }
 
-func (a *awaiter[T]) WaitAny(ctx context.Context) (T, []error, error) {
-	var t T
-	result, err, taskErrs := a.WaitN(ctx, 1)
-
-	if len(result) == 1 {
-		t = result[0]
-	}
-
-	return t, err, taskErrs
+func (a *awaiter) WaitAny(ctx context.Context) ([]error, error) {
+	return a.WaitN(ctx, 1)
 }

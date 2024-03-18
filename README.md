@@ -1,5 +1,5 @@
 # Async
-Async is an asynchronous task package for Go.
+Async is an async/await like task package for Go
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Tests](https://github.com/yaitoo/async/actions/workflows/tests.yml/badge.svg)](https://github.com/yaitoo/async/actions/workflows/tests.yml)
@@ -10,12 +10,12 @@ Async is an asynchronous task package for Go.
 
 
 ## Features
-- Wait/WaitAny/WaitN
+- Wait/WaitAny/WaitN for `Task` and `Action`
 - `context.Context` with `timeout`, `cancel`  support
 - Works with generic instead of `interface{}`
 
 ## Tutorials
-see more examples on [tests](./awaiter_test.go) or [go.dev](https://go.dev/play/p/7jgcRltbwts)
+see more examples on [tasks](./waiter_test.go), [actions](./awaiter_test.go) or [go.dev](https://go.dev/play/p/7jgcRltbwts)
 
 ### Install async
 - install latest commit from `main` branch
