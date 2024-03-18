@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [1.0.4] - 2024-03-18
-- added `Action` support
+- added `Action` support (#4)
 
 ## [1.0.3] - 2024-03-12
 - added `WaitN` (#1)

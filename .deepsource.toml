@@ -8,3 +8,8 @@ name = "go"
 
 [[transformers]]
 name = "gofmt"
+
+
+test_patterns = \[  
+  "\*_test.go",  
+]
