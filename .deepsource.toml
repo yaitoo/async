@@ -1,5 +1,9 @@
 version = 1
 
+test_patterns = \[  
+  "\*_test.go" 
+]
+
 [[analyzers]]
 name = "go"
 
@@ -10,6 +14,3 @@ name = "go"
 name = "gofmt"
 
 
-test_patterns = \[  
-  "\*_test.go",  
-]
