@@ -105,11 +105,11 @@ func (a *waiter[T]) WaitN(ctx context.Context, n int) ([]T, []error, error) {
 
 func (a *waiter[T]) WaitAny(ctx context.Context) (T, []error, error) {
 	var t T
-	result, err, taskErrs := a.WaitN(ctx, 1)
+	result, taskErrs, err := a.WaitN(ctx, 1)
 
 	if len(result) == 1 {
 		t = result[0]
 	}
 
-	return t, err, taskErrs
+	return t, taskErrs, err
 }
